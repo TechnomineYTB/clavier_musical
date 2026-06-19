@@ -1,40 +1,39 @@
+from pynput import keyboard
 import pygame
-import keyboard
-import time
 
 pygame.mixer.init()
 
-# Charger les sons (bouclés pour pouvoir les arrêter)
 sons = {
-    "a": pygame.mixer.Sound("1.mp3"),
-
+    "a": pygame.mixer.Sound("sons/do.wav"),
+    "z": pygame.mixer.Sound("sons/re.wav"),
+    "e": pygame.mixer.Sound("sons/mi.wav"),
+    "r": pygame.mixer.Sound("sons/fa.wav")
 }
 
-# Pour savoir quelles touches sont actuellement actives
 touches_actives = {t: False for t in sons}
 
-print("Clavier musical (ligne de commande)")
+def on_press(key):
+    try:
+        k = key.char
+        if k in sons and not touches_actives[k]:
+            sons[k].play(loops=-1)
+            touches_actives[k] = True
+    except:
+        pass
+
+def on_release(key):
+    try:
+        k = key.char
+        if k in sons and touches_actives[k]:
+            sons[k].stop()
+            touches_actives[k] = False
+    except:
+        pass
+
+    if key == keyboard.Key.esc:
+        return False
+
 print("Maintiens A Z E R pour jouer. Relâche pour arrêter. ESC pour quitter.")
 
-try:
-    while True:
-        # Vérifier chaque touche
-        for touche, son in sons.items():
-            if keyboard.is_pressed(touche):
-                if not touches_actives[touche]:
-                    son.play(loops=-1)  # jouer en boucle
-                    touches_actives[touche] = True
-            else:
-                if touches_actives[touche]:
-                    son.stop()
-                    touches_actives[touche] = False
-
-        if keyboard.is_pressed("esc"):
-            break
-
-        time.sleep(0.01)
-
-except KeyboardInterrupt:
-    pass
-
-print("Fermeture…")
+with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
+    listener.join()

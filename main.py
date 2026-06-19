@@ -1,39 +1,45 @@
-from pynput import keyboard
+from evdev import InputDevice, categorize, ecodes
 import pygame
 
 pygame.mixer.init()
 
 sons = {
-    "a": pygame.mixer.Sound("sons/do.wav"),
-    "z": pygame.mixer.Sound("sons/re.wav"),
-    "e": pygame.mixer.Sound("sons/mi.wav"),
-    "r": pygame.mixer.Sound("sons/fa.wav")
+    ecodes.KEY_A: pygame.mixer.Sound("1.mp3"),
+
 }
 
-touches_actives = {t: False for t in sons}
+touches_actives = {k: False for k in sons}
 
-def on_press(key):
-    try:
-        k = key.char
-        if k in sons and not touches_actives[k]:
-            sons[k].play(loops=-1)
-            touches_actives[k] = True
-    except:
-        pass
+# Trouver le clavier automatiquement
+import glob
+claviers = glob.glob("/dev/input/event*")
+device = None
 
-def on_release(key):
-    try:
-        k = key.char
-        if k in sons and touches_actives[k]:
-            sons[k].stop()
-            touches_actives[k] = False
-    except:
-        pass
+for path in claviers:
+    dev = InputDevice(path)
+    if "keyboard" in dev.name.lower() or "kbd" in dev.name.lower():
+        device = dev
+        break
 
-    if key == keyboard.Key.esc:
-        return False
+if device is None:
+    print("Aucun clavier trouvé dans /dev/input/")
+    exit()
 
-print("Maintiens A Z E R pour jouer. Relâche pour arrêter. ESC pour quitter.")
+print(f"Utilisation du clavier : {device.path}")
+print("Maintiens A Z E R pour jouer. Relâche pour arrêter. Ctrl+C pour quitter.")
 
-with keyboard.Listener(on_press=on_press, on_release=on_release) as listener:
-    listener.join()
+for event in device.read_loop():
+    if event.type == ecodes.EV_KEY:
+        key_event = categorize(event)
+        code = key_event.scancode
+
+        if code in sons:
+            if key_event.keystate == key_event.key_down:
+                if not touches_actives[code]:
+                    sons[code].play(loops=-1)
+                    touches_actives[code] = True
+
+            elif key_event.keystate == key_event.key_up:
+                if touches_actives[code]:
+                    sons[code].stop()
+                    touches_actives[code] = False

@@ -1,55 +1,68 @@
 import os
-
-# --- CONFIGURATION ALSA / SDL ---
-# Force SDL à utiliser ALSA
-os.environ["SDL_AUDIODRIVER"] = "alsa"
-
-# Force ALSA à utiliser la carte 0, device 0 (jack du Raspberry Pi)
-# Si tu utilises HDMI, remplace par "hw:1,0"
-os.environ["AUDIODEV"] = "hw:0,0"
-
-from evdev import InputDevice, categorize, ecodes
 import pygame
+from evdev import InputDevice, categorize, ecodes
 
-pygame.mixer.init(buffer=2040)
+# ---------------------------------------------------------
+# CONFIGURATION AUDIO (ALSA)
+# ---------------------------------------------------------
+os.environ["SDL_AUDIODRIVER"] = "alsa"
+os.environ["AUDIODEV"] = "hw:0,0"   # Jack = hw:0,0 / HDMI = hw:1,0
 
+pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
+
+print("Audio OK :", pygame.mixer.get_init())
+
+
+# ---------------------------------------------------------
+# CHARGEMENT DES SONS
+# ---------------------------------------------------------
 sons = {
-    ecodes.KEY_A: pygame.mixer.Sound("1.WAV"),
-
+    "a": pygame.mixer.Sound("sons/do.wav"),
+    "z": pygame.mixer.Sound("sons/re.wav"),
+    "e": pygame.mixer.Sound("sons/mi.wav"),
+    "r": pygame.mixer.Sound("sons/fa.wav"),
+    "t": pygame.mixer.Sound("sons/sol.wav"),
+    "y": pygame.mixer.Sound("sons/la.wav"),
+    "u": pygame.mixer.Sound("sons/si.wav"),
 }
 
-touches_actives = {k: False for k in sons}
+print("Sons chargés :", list(sons.keys()))
 
-# Trouver le clavier automatiquement
-import glob
-claviers = glob.glob("/dev/input/event*")
-device = None
 
-for path in claviers:
-    dev = InputDevice(path)
-    if "keyboard" in dev.name.lower() or "kbd" in dev.name.lower():
-        device = dev
-        break
+# ---------------------------------------------------------
+# DÉTECTION DU CLAVIER
+# ---------------------------------------------------------
+# Trouve automatiquement le clavier
+def trouver_clavier():
+    from evdev import list_devices
+    for path in list_devices():
+        dev = InputDevice(path)
+        if "Keyboard" in dev.name or "kbd" in dev.name.lower():
+            return dev
+    raise RuntimeError("Aucun clavier trouvé !")
 
-if device is None:
-    print("Aucun clavier trouvé dans /dev/input/")
-    exit()
+clavier = trouver_clavier()
+print("Clavier détecté :", clavier)
 
-print(f"Utilisation du clavier : {device.path}")
-print("Maintiens A Z E R pour jouer. Relâche pour arrêter. Ctrl+C pour quitter.")
 
-for event in device.read_loop():
+# ---------------------------------------------------------
+# BOUCLE PRINCIPALE
+# ---------------------------------------------------------
+print("Prêt ! Appuie sur les touches A Z E R T Y U…")
+
+for event in clavier.read_loop():
     if event.type == ecodes.EV_KEY:
-        key_event = categorize(event)
-        code = key_event.scancode
+        data = categorize(event)
 
-        if code in sons:
-            if key_event.keystate == key_event.key_down:
-                if not touches_actives[code]:
-                    sons[code].play(loops=-1)
-                    touches_actives[code] = True
+        if data.keystate == 1:  # 1 = key down
+            touche = data.keycode.lower()
 
-            elif key_event.keystate == key_event.key_up:
-                if touches_actives[code]:
-                    sons[code].stop()
-                    touches_actives[code] = False
+            # Certaines touches ont un nom en liste : ['KEY_A']
+            if isinstance(touche, list):
+                touche = touche[0]
+
+            touche = touche.replace("key_", "")
+
+            if touche in sons:
+                print("→", touche)
+                sons[touche].play()

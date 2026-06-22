@@ -18,7 +18,7 @@ print("AUDIODEV =", os.getenv("AUDIODEV"))
 print("pygame mixer init =", pygame.mixer.get_init())
 
 # --- TEST AUDIO ---
-son = pygame.mixer.Sound("1.wav")   # mets ton fichier ici
+son = pygame.mixer.Sound("1.WAV")   # mets ton fichier ici
 son.play()
 
 input("Appuie sur Entrée pour quitter")

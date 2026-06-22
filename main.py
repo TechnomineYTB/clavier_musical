@@ -17,13 +17,7 @@ print("Audio OK :", pygame.mixer.get_init())
 # CHARGEMENT DES SONS
 # ---------------------------------------------------------
 sons = {
-    "a": pygame.mixer.Sound("sons/do.wav"),
-    "z": pygame.mixer.Sound("sons/re.wav"),
-    "e": pygame.mixer.Sound("sons/mi.wav"),
-    "r": pygame.mixer.Sound("sons/fa.wav"),
-    "t": pygame.mixer.Sound("sons/sol.wav"),
-    "y": pygame.mixer.Sound("sons/la.wav"),
-    "u": pygame.mixer.Sound("sons/si.wav"),
+    "a": pygame.mixer.Sound("1.WAV"),
 }
 
 print("Sons chargés :", list(sons.keys()))

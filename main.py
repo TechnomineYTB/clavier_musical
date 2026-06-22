@@ -3,18 +3,16 @@ import pygame
 from evdev import InputDevice, categorize, ecodes
 
 # ---------------------------------------------------------
-# CONFIGURATION AUDIO (ALSA)
+# CONFIG AUDIO
 # ---------------------------------------------------------
 os.environ["SDL_AUDIODRIVER"] = "alsa"
-os.environ["AUDIODEV"] = "hw:0,0"   # Jack = hw:0,0 / HDMI = hw:1,0
+os.environ["AUDIODEV"] = "hw:0,0"
 
 pygame.mixer.init(frequency=44100, size=-16, channels=2, buffer=2048)
-
 print("Audio OK :", pygame.mixer.get_init())
 
-
 # ---------------------------------------------------------
-# CHARGEMENT DES SONS
+# SONS
 # ---------------------------------------------------------
 sons = {
     "a": pygame.mixer.Sound("1.WAV"),
@@ -22,41 +20,46 @@ sons = {
 
 print("Sons chargés :", list(sons.keys()))
 
-
 # ---------------------------------------------------------
-# DÉTECTION DU CLAVIER
+# DÉTECTION CLAVIER
 # ---------------------------------------------------------
-# Trouve automatiquement le clavier
 def trouver_clavier():
     from evdev import list_devices
     for path in list_devices():
         dev = InputDevice(path)
-        if "Keyboard" in dev.name or "kbd" in dev.name.lower():
+        name = dev.name.lower()
+
+        if (
+            "keyboard" in name or
+            "kbd" in name or
+            "usb" in name or
+            "hid" in name or
+            "key" in name
+        ):
             return dev
+
     raise RuntimeError("Aucun clavier trouvé !")
 
 clavier = trouver_clavier()
 print("Clavier détecté :", clavier)
 
-
 # ---------------------------------------------------------
 # BOUCLE PRINCIPALE
 # ---------------------------------------------------------
-print("Prêt ! Appuie sur les touches A Z E R T Y U…")
+print("Prêt ! Appuie sur A")
 
 for event in clavier.read_loop():
     if event.type == ecodes.EV_KEY:
         data = categorize(event)
 
-        if data.keystate == 1:  # 1 = key down
+        if data.keystate == 1:  # key down
             touche = data.keycode.lower()
 
-            # Certaines touches ont un nom en liste : ['KEY_A']
             if isinstance(touche, list):
                 touche = touche[0]
 
             touche = touche.replace("key_", "")
 
             if touche in sons:
-                print("→", touche)
+                print("=>", touche)
                 sons[touche].play()

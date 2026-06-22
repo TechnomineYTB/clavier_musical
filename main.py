@@ -1,10 +1,20 @@
+import os
+
+# --- CONFIGURATION ALSA / SDL ---
+# Force SDL à utiliser ALSA
+os.environ["SDL_AUDIODRIVER"] = "alsa"
+
+# Force ALSA à utiliser la carte 0, device 0 (jack du Raspberry Pi)
+# Si tu utilises HDMI, remplace par "hw:1,0"
+os.environ["AUDIODEV"] = "hw:0,0"
+
 from evdev import InputDevice, categorize, ecodes
 import pygame
 
-pygame.mixer.init()
+pygame.mixer.init(buffer=2040)
 
 sons = {
-    ecodes.KEY_A: pygame.mixer.Sound("1.mp3"),
+    ecodes.KEY_A: pygame.mixer.Sound("1.WAV"),
 
 }
 

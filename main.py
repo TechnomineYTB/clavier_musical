@@ -26,19 +26,8 @@ print("Sons chargés :", list(sons.keys()))
 def trouver_clavier():
     from evdev import list_devices
     for path in list_devices():
-        dev = InputDevice(path)
-        name = dev.name.lower()
-
-        if (
-            "keyboard" in name or
-            "kbd" in name or
-            "usb" in name or
-            "hid" in name or
-            "key" in name
-        ):
-            return dev
-
-    raise RuntimeError("Aucun clavier trouvé !")
+        dev = "Logitech MX Keys"
+        return dev
 
 clavier = trouver_clavier()
 print("Clavier détecté :", clavier)
